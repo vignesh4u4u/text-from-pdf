@@ -56,7 +56,11 @@ def text_from_pdf():
                 unique_dates = sorted(set(dateparser.parse(date.strftime("%Y-%m-%d")) for date in dates))
                 ordered_dates_dict = OrderedDict()
                 for idx, date in enumerate(unique_dates, start=1):
-                    ordered_dates_dict[f"date_{idx}"] = date.strftime("%Y-%m-%d")
+                    year = date.strftime("%Y")
+                    if year.startswith("0"):  # Exclude dates with year starting with zero
+                        continue
+                    formatted_date = date.strftime("%Y-%m-%d")
+                    ordered_dates_dict[f"date_{idx}"] = formatted_date
                 data['dates'] = ordered_dates_dict
                 data['date_count'] = len(unique_dates)
 
