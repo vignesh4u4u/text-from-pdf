@@ -20,13 +20,16 @@ from nameparser import HumanName
 from nltk.corpus import wordnet
 import os
 from collections import OrderedDict
+
 app = Flask(__name__, template_folder="template")
 nltk.download('punkt')
 nltk.download('stopwords')
 nlp = spacy.load('en_core_web_sm')
+
 @app.route("/")
 def home():
     return render_template("che.html")
+
 @app.route("/pre", methods=["POST", "GET"])
 def text_from_pdf():
     if request.method == 'POST':
@@ -51,13 +54,20 @@ def text_from_pdf():
             data['full_text'] = text
 
         if "dates" in selected_options:
-            dates = list(datefinder.find_dates(text))
+            date_pattern = r'\b(?:\d{1,2}[-/]\d{1,2}[-/]\d{2,4}|' \
+                           r'\d{1,2}(?:st|nd|rd|th)? \w+ \d{2,4}|' \
+                           r'\d{1,2} \w+ \d{2,4}|' \
+                           r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d{1,2},? \d{2,4}|' \
+                           r'(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?) \d{1,2}, \d{4})\b'
+
+            matches = re.findall(date_pattern, text, flags=re.IGNORECASE)
+            dates = [parser.parse(match, fuzzy=True) for match in matches]
+
             if dates:
-                unique_dates = sorted(set(dateparser.parse(date.strftime("%Y-%m-%d")) for date in dates))
                 ordered_dates_dict = OrderedDict()
-                for idx, date in enumerate(unique_dates, start=1):
-                    year = date.strftime("%Y")
-                    if year.startswith("0"):
+                for idx, date in enumerate(dates, start=1):
+                    year = date.year
+                    if str(year).startswith("0"):
                         continue
                     formatted_date = date.strftime("%Y-%m-%d")
                     ordered_dates_dict[f"date_{idx}"] = formatted_date
@@ -82,6 +92,7 @@ def text_from_pdf():
                         unique_names = set(ent.text for ent in doc.ents if ent.label_ == 'PERSON')
                         names.extend(unique_names)
                 return names
+
             extracted_names = extract_names_from_pdf(file_path)
             formatted_names = {f"Name_{idx}": name for idx, name in enumerate(extracted_names, start=1)}
             ordered_names = dict(sorted(formatted_names.items()))
@@ -93,5 +104,6 @@ def text_from_pdf():
         return jsonify(data)
 
     return render_template("che.html", **locals())
+
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
