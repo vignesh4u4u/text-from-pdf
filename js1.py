@@ -19,13 +19,16 @@ from dateparser.search import search_dates
 from nameparser import HumanName
 from nltk.corpus import wordnet
 import os
+from collections import OrderedDict
 app = Flask(__name__, template_folder="template")
 nltk.download('punkt')
 nltk.download('stopwords')
 nlp = spacy.load('en_core_web_sm')
+
 @app.route("/")
 def home():
     return render_template("che.html")
+
 @app.route("/pre", methods=["POST", "GET"])
 def text_from_pdf():
     if request.method == 'POST':
@@ -37,19 +40,27 @@ def text_from_pdf():
             text = extract_text(f)
         data = {}  # Dictionary to store the extracted data
 
-        if "full_text" in selected_options:
-            data['full_text'] = text
-        if "dates" in selected_options:
-            dates = list(datefinder.find_dates(text))
-            if len(dates) > 0:
-                data['dates'] = [str(date) for date in dates]
-
         if "addresses" in selected_options:
             addresses = pyap.parse(text, country='US')
             if addresses:
-                data['addresses'] = [address.full_address for address in addresses]
+                data['addresses'] = {f"address_{idx}": address.full_address for idx, address in enumerate(addresses, start=1)}
+                data['address_count'] = len(addresses)
             else:
                 data['addresses'] = "No addresses found."
+
+        if "full_text" in selected_options:
+            data['full_text'] = text
+
+        if "dates" in selected_options:
+            dates = list(datefinder.find_dates(text))
+            if dates:
+                parsed_dates = [dateparser.parse(date.strftime("%Y-%m-%d")) for date in dates]
+                ordered_dates = sorted(parsed_dates)
+                ordered_dates_dict = OrderedDict()
+                for idx, date in enumerate(parsed_dates, start=1):
+                    ordered_dates_dict[f"date_{idx}"] = date.strftime("%Y-%m-%d")
+                data['dates'] = ordered_dates_dict
+                data['date_count'] = len(dates)
 
         if "names" in selected_options:
             def extract_names_from_pdf(file_path):
@@ -59,8 +70,7 @@ def text_from_pdf():
                     for page in pdf.pages:
                         page_text = page.extract_text()
                         tokens = word_tokenize(page_text)
-                        filtered_tokens = [token for token in tokens if
-                                           token.isalpha() and token.lower() not in stop_words]
+                        filtered_tokens = [token for token in tokens if token.isalpha() and token.lower() not in stop_words]
                         text = ' '.join(filtered_tokens)
                         doc = nlp(text)
                         for ent in doc.ents:
@@ -69,23 +79,16 @@ def text_from_pdf():
                 return names
 
             extracted_names = extract_names_from_pdf(file_path)
-            human_names = []
-            for name in extracted_names:
-                if re.match(r'^[A-Z][a-z]+ [A-Z][a-z]+$', name):
-                    human_names.append(name)
-                elif re.match(r"\b[A-Z][a-zA-Z]+\b", name):
-                    human_names.append(name)
-
-            data['extracted_names'] = extracted_names
-            data['human_names'] = human_names
+            formatted_names = {f"Name_{idx}": name for idx, name in enumerate(extracted_names, start=1)}
+            ordered_names = dict(sorted(formatted_names.items()))
+            data['extracted_names'] = ordered_names
+            data['name_count'] = len(extracted_names)
 
         os.remove(file_path)
 
-        # Convert data to JSON and return
         return jsonify(data)
 
     return render_template("che.html", **locals())
-
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
