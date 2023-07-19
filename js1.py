@@ -57,12 +57,15 @@ def text_from_pdf():
                 ordered_dates_dict = OrderedDict()
                 for idx, date in enumerate(unique_dates, start=1):
                     year = date.strftime("%Y")
-                    if year.startswith("0"):  # Exclude dates with year starting with zero
+                    if year.startswith("0"):
                         continue
                     formatted_date = date.strftime("%Y-%m-%d")
                     ordered_dates_dict[f"date_{idx}"] = formatted_date
                 data['dates'] = ordered_dates_dict
-                data['date_count'] = len(unique_dates)
+                data['date_count'] = len(ordered_dates_dict)
+                adjusted_dates_dict = {f"date_{i}": ordered_dates_dict[key] for i, key in
+                                       enumerate(ordered_dates_dict, start=1)}
+                data['dates'] = adjusted_dates_dict
 
         if "names" in selected_options:
             def extract_names_from_pdf(file_path):
@@ -79,7 +82,6 @@ def text_from_pdf():
                         unique_names = set(ent.text for ent in doc.ents if ent.label_ == 'PERSON')
                         names.extend(unique_names)
                 return names
-
             extracted_names = extract_names_from_pdf(file_path)
             formatted_names = {f"Name_{idx}": name for idx, name in enumerate(extracted_names, start=1)}
             ordered_names = dict(sorted(formatted_names.items()))
