@@ -61,18 +61,14 @@ def text_from_pdf():
                            r'(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?) \d{1,2}, \d{4})\b'
 
             matches = re.findall(date_pattern, text, flags=re.IGNORECASE)
-            dates = [parser.parse(match, fuzzy=True) for match in matches if not match.startswith(('0', '00'))]
-            unique_dates = list(set(date.strftime("%Y-%m-%d") for date in dates))
+            dates = [parser.parse(match, fuzzy=True) for match in matches]
 
-            if unique_dates:
-                ordered_dates_dict = OrderedDict()
-                for idx, date in enumerate(unique_dates, start=1):
-                    ordered_dates_dict[f"date_{idx}"] = date
-                data['dates'] = ordered_dates_dict
-                data['date_count'] = len(ordered_dates_dict)
-                adjusted_dates_dict = {f"date_{i}": ordered_dates_dict[key] for i, key in
-                                       enumerate(ordered_dates_dict, start=1)}
-                data['dates'] = adjusted_dates_dict
+            unique_dates = list(set(date.strftime("%Y-%m-%d") for date in dates))
+            ordered_dates_dict = OrderedDict()
+            for idx, date in enumerate(unique_dates, start=1):
+                ordered_dates_dict[f"date_{idx}"] = date
+            data['dates'] = ordered_dates_dict
+            data['date_count'] = len(ordered_dates_dict)
 
         if "names" in selected_options:
             def extract_names_from_pdf(file_path):
