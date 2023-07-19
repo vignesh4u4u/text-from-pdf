@@ -41,8 +41,9 @@ def text_from_pdf():
         if "addresses" in selected_options:
             addresses = pyap.parse(text, country='US')
             if addresses:
-                data['addresses'] = {f"address_{idx}": address.full_address for idx, address in enumerate(addresses, start=1)}
-                data['address_count'] = len(addresses)
+                unique_addresses = list(set(address.full_address for address in addresses))
+                data['addresses'] = {f"address_{idx}": address for idx, address in enumerate(unique_addresses, start=1)}
+                data['address_count'] = len(unique_addresses)
             else:
                 data['addresses'] = "No addresses found."
 
@@ -52,13 +53,12 @@ def text_from_pdf():
         if "dates" in selected_options:
             dates = list(datefinder.find_dates(text))
             if dates:
-                parsed_dates = [dateparser.parse(date.strftime("%Y-%m-%d")) for date in dates]
-                ordered_dates = sorted(parsed_dates)
+                unique_dates = sorted(set(dateparser.parse(date.strftime("%Y-%m-%d")) for date in dates))
                 ordered_dates_dict = OrderedDict()
-                for idx, date in enumerate(parsed_dates, start=1):
+                for idx, date in enumerate(unique_dates, start=1):
                     ordered_dates_dict[f"date_{idx}"] = date.strftime("%Y-%m-%d")
                 data['dates'] = ordered_dates_dict
-                data['date_count'] = len(dates)
+                data['date_count'] = len(unique_dates)
 
         if "names" in selected_options:
             def extract_names_from_pdf(file_path):
@@ -68,12 +68,12 @@ def text_from_pdf():
                     for page in pdf.pages:
                         page_text = page.extract_text()
                         tokens = word_tokenize(page_text)
-                        filtered_tokens = [token for token in tokens if token.isalpha() and token.lower() not in stop_words]
+                        filtered_tokens = [token for token in tokens if
+                                           token.isalpha() and token.lower() not in stop_words]
                         text = ' '.join(filtered_tokens)
                         doc = nlp(text)
-                        for ent in doc.ents:
-                            if ent.label_ == 'PERSON':
-                                names.append(ent.text)
+                        unique_names = set(ent.text for ent in doc.ents if ent.label_ == 'PERSON')
+                        names.extend(unique_names)
                 return names
 
             extracted_names = extract_names_from_pdf(file_path)
