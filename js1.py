@@ -61,14 +61,11 @@ def text_from_pdf():
                            r'(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?) \d{1,2}, \d{4})\b'
 
             matches = re.findall(date_pattern, text, flags=re.IGNORECASE)
-            dates = [parser.parse(match, fuzzy=True) for match in matches]
+            dates = [parser.parse(match, fuzzy=True) for match in matches if not match.startswith(('0', '00'))]
 
             if dates:
                 ordered_dates_dict = OrderedDict()
                 for idx, date in enumerate(dates, start=1):
-                    year = date.year
-                    if str(year).startswith("0"):
-                        continue
                     formatted_date = date.strftime("%Y-%m-%d")
                     ordered_dates_dict[f"date_{idx}"] = formatted_date
                 data['dates'] = ordered_dates_dict
