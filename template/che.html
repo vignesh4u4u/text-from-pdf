@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PDF Text Extraction</title>
+</head>
+<body>
+    <h1 style="text-align:center;font-size:30px">Extract Information from PDF</h1>
+    <form method="POST" action="/pre" enctype="multipart/form-data">
+        <input type="file" name="pdf_file" accept=".pdf" required><br><br>
+        <label>Choose extraction options:</label><br>
+        <label>
+            <input type="checkbox" name="myselect" value="full_text">
+            Full Text
+        </label><br>
+        <label>
+            <input type="checkbox" name="myselect" value="dates">
+            Extract Dates
+        </label><br>
+        <label>
+            <input type="checkbox" name="myselect" value="addresses">
+            Extract Addresses
+        </label><br>
+        <label>
+            <input type="checkbox" name="myselect" value="names">
+            Extract Names
+        </label><br><br>
+        <input type="submit" value="Extract Data"><br><br>
+    </form>
+    {% if text_con %}
+        <h2>Full Text:</h2>
+        <p>{{ text_con }}</p>
+    {% endif %}
+    {% if dates %}
+        <h2>Dates Found:</h2>
+        <ol>
+            {% for i in range(dates|length) %}
+            {% set date_variable = 'date' ~ (i+1) %}
+            {% set formatted_date = dates[i].strftime("%Y-%m-%d") %}
+            <li><b>{{ date_variable }} = {{ formatted_date }}</b></li>
+        {% endfor %}
+    </ol>
+{% else %}
+    <p>No dates found.</p>
+{% endif %}
+
+    {% if addresses %}
+        <h2>Addresses Found:</h2>
+    <ol>
+               {% for i in range(addresses|length) %}
+            {% set address_variable = 'address' ~ (i+1) %}
+            <li>{{ address_variable }} = {{ addresses[i].full_address }}</li>
+        {% endfor %}
+    </ol>
+{% else %}
+    <p>No addresses found.</p>
+    {% endif %}
+    {% if extracted_names %}
+        <h2>Names Found:</h2>
+        <p>
+            {% for name in extracted_names %}
+                {{ name }}<br>
+            {% endfor %}
+        </p>
+    {% else %}
+        <p>No names found.</p>
+    {% endif %}
+</body>
+</html>
+
+
+

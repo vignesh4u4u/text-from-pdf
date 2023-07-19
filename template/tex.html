@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PDF Text Extraction</title>
+</head>
+<body>
+    <h1>Extract Information from PDF</h1>
+    <form method="POST" action="/pre" enctype="multipart/form-data">
+        <input type="file" name="pdf_file" accept=".pdf" required><br><br>
+        <label>Select an option:</label>
+        <select name="myselect">
+            <option value="full text">Full Text</option>
+            <option value="date">Extract Dates</option>
+            <option value="address">Extract Addresses</option>
+            <option value="name">Extract Names</option>
+        </select><br><br>
+        <input type="submit" value="Extract Text"><br><br>
+    </form>
+
+    {% if selected_option == "full text" %}
+        <h2>Full Text:</h2>
+        <p>{{ text_con }}</p>
+    {% endif %}
+    {% if dates %}
+        <h2>Dates Found:</h2>
+        <ol>
+            {% for i in range(dates|length) %}
+            {% set date_variable = 'date' ~ (i+1) %}
+            {% set formatted_date = dates[i].strftime("%Y-%m-%d") %}
+            <li><b>{{ date_variable }} = {{ formatted_date }}</b></li>
+        {% endfor %}
+    </ol>
+{% else %}
+    <p>No dates found.</p>
+{% endif %}
+
+    {% if addresses %}
+        <h2>Addresses Found:</h2>
+    <ol>
+               {% for i in range(addresses|length) %}
+            {% set address_variable = 'address' ~ (i+1) %}
+            <li>{{ address_variable }} = {{ addresses[i].full_address }}</li>
+        {% endfor %}
+    </ol>
+{% else %}
+    <p>No addresses found.</p>
+    {% endif %}
+    {% if selected_option == "name" %}
+    {% if extracted_names %}
+        <h2>Names Found:</h2>
+        <p>
+            {% for name in extracted_names %}
+                {{ name }}<br>
+            {% endfor %}
+        </p>
+    {% else %}
+        <p>No names found.</p>
+    {% endif %}
+{% endif %}
+</body>
+</html>
+
+
+

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>pdf file read</title>
+</head>
+<body>
+    <h1>extract infomation from pdf</h1>
+    <form method="POST" action="/pre" enctype="multipart/form-data">
+        <input type="file" name="pdf_file" accept=".pdf" required>
+        <input type="submit" value="Extract Text"><br><br>
+        <div>
+            {% if dates %}
+    <ol>
+        {% for i in range(dates|length) %}
+            {% set date_variable = 'date' ~ (i+1) %}
+            {% set formatted_date = dates[i].strftime("%Y-%m-%d") %}
+            <li><b>{{ date_variable }} = {{ formatted_date }}</b></li>
+        {% endfor %}
+    </ol>
+{% else %}
+    <p>No dates found.</p>
+{% endif %}
+{% if addresses %}
+    <h2>Addresses found:</h2>
+    <ol>
+        {% for i in range(addresses|length) %}
+            {% set address_variable = 'address' ~ (i+1) %}
+            <li>{{ address_variable }} = {{ addresses[i].full_address }}</li>
+        {% endfor %}
+    </ol>
+{% else %}
+    <p>No addresses found.</p>
+{% endif %}
+
+        </div>
+    </form>
+</body>
+</html>
