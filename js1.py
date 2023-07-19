@@ -24,11 +24,9 @@ app = Flask(__name__, template_folder="template")
 nltk.download('punkt')
 nltk.download('stopwords')
 nlp = spacy.load('en_core_web_sm')
-
 @app.route("/")
 def home():
     return render_template("che.html")
-
 @app.route("/pre", methods=["POST", "GET"])
 def text_from_pdf():
     if request.method == 'POST':
@@ -89,6 +87,5 @@ def text_from_pdf():
         return jsonify(data)
 
     return render_template("che.html", **locals())
-
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
