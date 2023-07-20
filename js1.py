@@ -54,7 +54,7 @@ def text_from_pdf():
             data['full_text'] = text
 
         if "dates" in selected_options:
-            date_pattern = r'\b(?:\d{1,2}[-/]\d{1,2}[-/]\d{2,4}|' \
+            date_pattern = r'(?i)\b(?:\d{1,2}[-/]\d{1,2}[-/]\d{2,4}|' \
                            r'\d{1,2}(?:st|nd|rd|th)? \w+ \d{2,4}|' \
                            r'\d{1,2} \w+ \d{2,4}|' \
                            r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d{1,2},? \d{2,4}|' \
@@ -87,11 +87,11 @@ def text_from_pdf():
                 return names
 
             extracted_names = extract_names_from_pdf(file_path)
-            formatted_names = {f"Name_{idx}": name for idx, name in enumerate(extracted_names, start=1)}
-            ordered_names = dict(sorted(formatted_names.items()))
-            data['extracted_names'] = ordered_names
-            data['name_count'] = len(extracted_names)
-
+            name_length_threshold = 25
+            filtered_names = [name for name in extracted_names if len(name) <= name_length_threshold]
+            formatted_names = {f"Name_{idx}": name for idx, name in enumerate(filtered_names, start=1)}
+            data['extracted_names'] = formatted_names
+            #data['name_count'] = len(filtered_names)
         os.remove(file_path)
 
         return jsonify(data)
