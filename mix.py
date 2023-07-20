@@ -9,10 +9,10 @@ from pdfminer.high_level import extract_text
 import datefinder
 import pyap
 # Extract text from the PDF
-text = extract_text('Lease10.pdf')
+text = extract_text('Lease10.pdf')"""
 #print(text)
 # Find dates within the extracted text
-dates = list(datefinder.find_dates(text))
+"""dates = list(datefinder.find_dates(text))
 # Check if dates are present
 if len(dates) > 0:
     print("Dates found:")
@@ -87,7 +87,7 @@ for name in extracted_names:
     print(name)"""
 
 print("--------------------only human name-----------")
-import nltk
+"""import nltk
 from nltk.tag import pos_tag
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
@@ -134,5 +134,50 @@ for name in extracted_names:
         human_names.append(name)
 print("Extracted human names:")
 for name in human_names:
-    print(name)
+    print(name)"""
+
+"""print("------------------spacy-----------")
+import spacy
+
+# Load the pre-trained English model
+nlp = spacy.load('en_core_web_sm')
+
+# Text to be analyzed
+#text = "John Smith and Sarah Johnson went to the park."
+
+# Process the text with the NER model
+doc = nlp(text)
+
+# Extract person names
+person_names = []
+for ent in doc.ents:
+    if ent.label_ == 'PERSON':
+        person_names.append(ent.text)
+
+# Display the predicted names
+for name in person_names:
+    print(name)"""
+print("-----------------date------------------")
+import PyPDF2
+import dateparser
+def extract_text_from_pdf(file_path):
+    with open(file_path, 'rb') as f:
+        pdf_reader = PyPDF2.PdfFileReader(f)
+        num_pages = pdf_reader.numPages
+        text = ""
+        for page_number in range(num_pages):
+            page = pdf_reader.getPage(page_number)
+            text += page.extract_text()
+    return text
+def extract_dates_from_text(text):
+    extracted_dates = dateparser.search.search_dates(text)
+    dates = [date for date, _ in extracted_dates]
+    return dates
+file_path = 'Lease6.pdf'
+text = extract_text_from_pdf(file_path)
+dates = extract_dates_from_text(text)
+
+for date in dates:
+    print(date)
+
 

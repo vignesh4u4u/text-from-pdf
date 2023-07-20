@@ -25,11 +25,9 @@ app = Flask(__name__, template_folder="template")
 nltk.download('punkt')
 nltk.download('stopwords')
 nlp = spacy.load('en_core_web_sm')
-
 @app.route("/")
 def home():
     return render_template("che.html")
-
 @app.route("/pre", methods=["POST", "GET"])
 def text_from_pdf():
     if request.method == 'POST':
@@ -93,7 +91,6 @@ def text_from_pdf():
             data['extracted_names'] = formatted_names
             #data['name_count'] = len(filtered_names)
         os.remove(file_path)
-
         return jsonify(data)
 
     return render_template("che.html", **locals())
