@@ -20,14 +20,12 @@ from dateparser.search import search_dates
 from nameparser import HumanName
 import os
 from collections import OrderedDict
-
 app = Flask(__name__, template_folder="template")
 nltk.download('punkt')
 nltk.download('stopwords')
 nltk.download('maxent_ne_chunker')
 nltk.download('words')
 nlp = spacy.load('en_core_web_sm')
-
 def find_human_names(text):
     sentences = nltk.sent_tokenize(text)
     tokenized_sentences = [nltk.word_tokenize(sentence) for sentence in sentences]
@@ -37,7 +35,7 @@ def find_human_names(text):
     person_names = []
     for tree in named_entities:
         for subtree in tree:
-            if isinstance(subtree, nltk.Tree) and subtree.label() == 'NE':
+            if isinstance(subtree, nltk.Tree) and subtree.label() == 'PERSON':
                 person_name = ' '.join([token for token, pos in subtree.leaves()])
                 # Use HumanName to check if the name has titles or suffixes
                 name_obj = HumanName(person_name)
