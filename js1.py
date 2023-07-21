@@ -1,3 +1,4 @@
+import re
 from flask import Flask, request, render_template, jsonify
 import json
 import pyap
@@ -17,9 +18,9 @@ import pdfplumber
 import spacy
 from dateparser.search import search_dates
 from nameparser import HumanName
-from nltk.corpus import wordnet
 import os
 from collections import OrderedDict
+
 app = Flask(__name__, template_folder="template")
 nltk.download('punkt')
 nltk.download('stopwords')
@@ -71,7 +72,7 @@ def text_from_pdf():
 
         if "names" in selected_options:
             def extract_names_from_pdf(file_path):
-                names = []
+                names = set()  # Use a set to store names and remove duplicates
                 stop_words = set(stopwords.words('english'))
                 with pdfplumber.open(file_path) as pdf:
                     for page in pdf.pages:
@@ -82,7 +83,7 @@ def text_from_pdf():
                         text = ' '.join(filtered_tokens)
                         doc = nlp(text)
                         unique_names = set(ent.text for ent in doc.ents if ent.label_ == 'PERSON')
-                        names.extend(unique_names)
+                        names.update(unique_names)  # Use update() to add elements from the set
                 return names
 
             extracted_names = extract_names_from_pdf(file_path)

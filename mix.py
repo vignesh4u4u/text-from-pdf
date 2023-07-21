@@ -158,7 +158,7 @@ for ent in doc.ents:
 for name in person_names:
     print(name)"""
 print("-----------------date------------------")
-import PyPDF2
+"""import PyPDF2
 import dateparser
 def extract_text_from_pdf(file_path):
     with open(file_path, 'rb') as f:
@@ -178,6 +178,34 @@ text = extract_text_from_pdf(file_path)
 dates = extract_dates_from_text(text)
 
 for date in dates:
-    print(date)
+    print(date)"""
 
+import nltk
+
+# Download the NER trained model (Note: This is a large download)
+nltk.download('maxent_ne_chunker')
+nltk.download('words')
+
+# Function to find human names using NER
+def find_human_names(text):
+    sentences = nltk.sent_tokenize(text)
+    tokenized_sentences = [nltk.word_tokenize(sentence) for sentence in sentences]
+    tagged_sentences = [nltk.pos_tag(sentence) for sentence in tokenized_sentences]
+    named_entities = nltk.ne_chunk_sents(tagged_sentences, binary=True)
+
+    person_names = []
+    for tree in named_entities:
+        for subtree in tree:
+            if isinstance(subtree, nltk.Tree) and subtree.label() == 'NE':
+                person_name = ' '.join([token for token, pos in subtree.leaves()])
+                person_names.append(person_name)
+
+    return person_names
+
+# Example text
+text = "John Smith is a software engineer at XYZ Corp. Jane Doe works in the marketing department."
+
+# Find human names
+names = find_human_names(text)
+print(names)
 
