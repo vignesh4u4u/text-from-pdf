@@ -20,7 +20,6 @@ from nameparser import HumanName
 from nltk.corpus import wordnet
 import os
 from collections import OrderedDict
-
 app = Flask(__name__, template_folder="template")
 nltk.download('punkt')
 nltk.download('stopwords')
@@ -56,7 +55,9 @@ def text_from_pdf():
                            r'\d{1,2}(?:st|nd|rd|th)? \w+ \d{2,4}|' \
                            r'\d{1,2} \w+ \d{2,4}|' \
                            r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d{1,2},? \d{2,4}|' \
-                           r'(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?) \d{1,2}, \d{4})\b'
+                           r'(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?) \d{1,2}, \d{4}|' \
+                           r'[a-zA-Z]{3} \d{1,2}, \d{4}|' \
+                           r'[a-zA-Z]{3} \d{1,2},\d{4})\b'
 
             matches = re.findall(date_pattern, text, flags=re.IGNORECASE)
             dates = [parser.parse(match, fuzzy=True) for match in matches]
