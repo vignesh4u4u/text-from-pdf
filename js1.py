@@ -37,13 +37,66 @@ def text_from_pdf():
             text = extract_text(f)
         data = {}
         if "addresses" in selected_options:
-            addresses = pyap.parse(text, country='US')
+            addresses = pyap.parse(text, country='US') # us
             if addresses:
                 unique_addresses = list(set(address.full_address for address in addresses))
                 data['addresses'] = {f"address_{idx}": address for idx, address in enumerate(unique_addresses, start=1)}
                 data['address_count'] = len(unique_addresses)
             else:
                 data['addresses'] = "No addresses found."
+            addresses_in = pyap.parse(text, country='IN')# india
+            if addresses_in:
+                unique_addresses_in = list(set(address.full_address for address in addresses_in))
+                data['addresses_in'] = {f"address_{idx}": address for idx, address in enumerate(unique_addresses_in, start=1)}
+                data['address_count_in'] = len(unique_addresses_in)
+            else:
+                data['addresses_in'] = "No addresses found for India."
+            addresses_uk = pyap.parse(text, country='GB') # uk
+            if addresses_uk:
+                unique_addresses_in = list(set(address.full_address for address in addresses_uk))
+                data['addresses_in'] = {f"address_{idx}": address for idx, address in enumerate(unique_addresses_in, start=1)}
+                data['address_count_in'] = len(unique_addresses_in)
+            else:
+                data['addresses_in'] = "No addresses found for India."
+            addresses_ca = pyap.parse(text, country='CA') #canada
+            if addresses_ca:
+                unique_addresses_in = list(set(address.full_address for address in addresses_ca))
+                data['addresses_in'] = {f"address_{idx}": address for idx, address in enumerate(unique_addresses_in, start=1)}
+                data['address_count_in'] = len(unique_addresses_in)
+            else:
+                data['addresses_in'] = "No addresses found for India."
+            addresses_au = pyap.parse(text, country='AU')#Australia
+            if addresses_au:
+                unique_addresses_in = list(set(address.full_address for address in addresses_au))
+                data['addresses_in'] = {f"address_{idx}": address for idx, address in enumerate(unique_addresses_in, start=1)}
+                data['address_count_in'] = len(unique_addresses_in)
+            else:
+                data['addresses_in'] = "No addresses found for Australia."
+            addresses_ge = pyap.parse(text, country='DE')  # germany
+            if addresses_ge:
+                unique_addresses_in = list(set(address.full_address for address in addresses_ge))
+                data['addresses_in'] = {f"address_{idx}": address for idx, address in
+                                        enumerate(unique_addresses_in, start=1)}
+                data['address_count_in'] = len(unique_addresses_in)
+            else:
+                data['addresses_in'] = "No addresses found for germany."
+            addresses_ch = pyap.parse(text, country='CN')  #china
+            if addresses_ch:
+                unique_addresses_in = list(set(address.full_address for address in addresses_ch))
+                data['addresses_in'] = {f"address_{idx}": address for idx, address in
+                                        enumerate(unique_addresses_in, start=1)}
+                data['address_count_in'] = len(unique_addresses_in)
+            else:
+                data['addresses_in'] = "No addresses found for chaina."
+            addresses_fr = pyap.parse(text, country='FR')
+            if addresses_fr:
+                unique_addresses_in = list(set(address.full_address for address in addresses_fr))
+                data['addresses_in'] = {f"address_{idx}": address for idx, address in
+                                        enumerate(unique_addresses_in, start=1)}
+                data['address_count_in'] = len(unique_addresses_in)
+            else:
+                data['addresses_in'] = "No addresses found for france."
+
         if "full_text" in selected_options:
             data['full_text'] = text
 
