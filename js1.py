@@ -1,4 +1,3 @@
-import re
 from flask import Flask, request, render_template, jsonify
 import json
 import pyap
@@ -36,7 +35,7 @@ def text_from_pdf():
         file.save(file_path)
         with open(file_path, 'rb') as f:
             text = extract_text(f)
-        data = {}  # Dictionary to store the extracted data
+        data = {}
         if "addresses" in selected_options:
             addresses = pyap.parse(text, country='US')
             if addresses:
@@ -59,13 +58,13 @@ def text_from_pdf():
 
             matches = re.findall(date_pattern, text, flags=re.IGNORECASE)
             dates = [parser.parse(match, fuzzy=True) for match in matches]
-
             unique_dates = list(set(date.strftime("%Y-%m-%d") for date in dates))
             ordered_dates_dict = OrderedDict()
             for idx, date in enumerate(unique_dates, start=1):
                 ordered_dates_dict[f"date_{idx}"] = date
             data['dates'] = ordered_dates_dict
             data['date_count'] = len(ordered_dates_dict)
+
         if "names" in selected_options:
             def extract_names_from_pdf(file_path):
                 names = set()  # Use a set to store names and remove duplicates
@@ -85,8 +84,9 @@ def text_from_pdf():
             name_length_threshold = 25
             filtered_names = [name for name in extracted_names if len(name) <= name_length_threshold]
             formatted_names = {f"Name_{idx}": name for idx, name in enumerate(filtered_names, start=1)}
-            data['extracted_names'] = formatted_names
-            #data['name_count'] = len(filtered_names)
+            data['extracted_names'] = {
+                'name_count': len(filtered_names),
+                'names': formatted_names}
         os.remove(file_path)
         return jsonify(data)
     return render_template("che.html", **locals())
