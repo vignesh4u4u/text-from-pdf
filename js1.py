@@ -235,7 +235,7 @@ def text_from_pdf():
 
         if "names" in selected_options:
             def extract_names_from_pdf(file_path):
-                names = set()
+                names = set()  # Use a set to store names and remove duplicates
                 stop_words = set(stopwords.words('english'))
                 with pdfplumber.open(file_path) as pdf:
                     for page in pdf.pages:
@@ -246,22 +246,15 @@ def text_from_pdf():
                         text = ' '.join(filtered_tokens)
                         doc = nlp(text)
                         unique_names = set(ent.text for ent in doc.ents if ent.label_ == 'PERSON')
-                        remove_stopwords = [name for name in unique_names if (name.lower() not in stop_words) and (len(name.split()) > 2)]
-                        names.update(set(remove_stopwords))
+                        names.update(unique_names)
                 return names
+
             extracted_names = extract_names_from_pdf(file_path)
             name_length_threshold = 25
             filtered_names = [name for name in extracted_names if len(name) <= name_length_threshold]
-            names_string = " ".join(filtered_names)# names_string = "\n".join(filtered_names)
-            name_format = names_string
-            words_in_text = name_format.lower().split()
-            set_d = set(words_in_text)
-            set_c = set(list_lowercase)
-            common_elements = set_d.intersection(set_c) # or set_d & set_c
-            all_names = list(common_elements)
-            formatted_names = {f"name_{idx + 1}": name for idx, name in enumerate(all_names)}
+            formatted_names = {f"Name_{idx}": name for idx, name in enumerate(filtered_names, start=1)}
             data['extracted_names'] = {
-                'name_count': len(all_names),
+                'name_count': len(filtered_names),
                 'names': formatted_names}
         os.remove(file_path)
         return jsonify(data)
