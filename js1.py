@@ -246,8 +246,8 @@ def text_from_pdf():
                         text = ' '.join(filtered_tokens)
                         doc = nlp(text)
                         unique_names = set(ent.text for ent in doc.ents if ent.label_ == 'PERSON')
-                        remove_stopwords = [name for name in unique_names if name.lower() not in stop_words]
-                        names.update(remove_stopwords)
+                        remove_stopwords = [name for name in unique_names if (name.lower() not in stop_words) and (len(name.split()) > 2)]
+                        names.update(set(remove_stopwords))
                 return names
             extracted_names = extract_names_from_pdf(file_path)
             name_length_threshold = 25
