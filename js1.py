@@ -154,7 +154,6 @@ j10=nd.get_top_names(country_alpha2="UY")
 J=(j1["SE"]["M"]+j1["SE"]["F"])+(j2["SG"]["M"]+j2["SG"]["F"])+(j3["SI"]["M"]+j3["SI"]["F"])+(j4["SV"]["M"]+j4["SV"]["F"])+(j5["SY"]["M"]+j5["SY"]["F"])+(j6["TM"]["M"]+j6["TM"]["F"])+\
   (j7["TN"]["M"]+j7["TN"]["F"])+(j8["TR"]["M"]+j8["TR"]["F"])+(j9["TW"]["M"]+j9["TW"]["F"])+(j10["UY"]["M"]+j10["UY"]["F"])
 name_list=(A+B+C+D+E+F+G+H+I+J)
-
 # read the names in dataset using pandas
 df1=pd.read_csv(r"C:\Users\VigneshSubramani\Desktop\Dataset\NAMES DATASET\name_list9.csv")
 df2=pd.read_csv(r"C:\Users\VigneshSubramani\Desktop\Dataset\NAMES DATASET\name_list1.csv")
@@ -204,7 +203,7 @@ def text_from_pdf():
             addresse1 = pyap.parse(text,country="US")
             addresse2 = pyap.parse(text, country="GB")
             addresse3 = pyap.parse(text, country="CA")
-            addresses= addresse1+addresse2+addresse3
+            addresses= addresse1
             if addresses:
                 unique_addresses = list(set(address.full_address for address in addresses))
                 data['addresses'] = {f"address_{idx}": address for idx, address in enumerate(unique_addresses, start=1)}
@@ -248,7 +247,6 @@ def text_from_pdf():
                         unique_names = set(ent.text for ent in doc.ents if ent.label_ == 'PERSON')
                         names.update(unique_names)
                 return names
-
             extracted_names = extract_names_from_pdf(file_path)
             name_length_threshold = 25
             filtered_names = [name for name in extracted_names if len(name) <= name_length_threshold]
