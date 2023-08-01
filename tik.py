@@ -60,12 +60,9 @@ def text_from_pdf():
         file.save(file_path)
         with open(file_path, 'rb') as f:
             text = extract_text(f)
-
         data = {}
-
         if "full_text" in selected_options:
             data['full_text'] = text
-
         if "addresses" in selected_options:
             addresse1 = pyap.parse(text, country="US")
             addresse2 = pyap.parse(text, country="GB")  # UK
@@ -96,12 +93,11 @@ def text_from_pdf():
             matches = re.findall(date_pattern, text, flags=re.IGNORECASE)
             dates = [parser.parse(match, fuzzy=True) for match in matches]
             unique_dates = list(set(date.strftime("%Y-%m-%d") for date in dates))
-            unique_dates.sort()  # Sort the dates for consistency
-            ordered_dates_list = [{"value": date} for date in unique_dates]
-            data['dates'] = {
-                "date_count": len(ordered_dates_list),
-                "dates": ordered_dates_list
-            }
+            # Filter out dates with starting year "0"
+            valid_dates = [date for date in unique_dates if not date.startswith("0")]
+            formatted_dates = [{"value": date} for date in valid_dates]
+            data['dates'] = formatted_dates
+            data['date_count'] = len(formatted_dates)
 
         if "names" in selected_options:
             def extract_names_from_pdf(file_path):

@@ -222,6 +222,7 @@ import dateparser
 import nltk
 import tika
 import re
+import usaddress
 from nltk.tag import pos_tag
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
@@ -236,6 +237,7 @@ app = Flask(__name__)
 nltk.download('punkt')
 nltk.download('stopwords')
 nlp = spacy.load('en_core_web_sm')
+
 @app.route("/ml-service/health/v1/ping",methods=["GET"])
 def home():
     if request.method == 'GET':
@@ -262,7 +264,7 @@ def text_from_pdf():
                 data['addresses'] = formatted_addresses
                 data['address_count'] = len(formatted_addresses)
             else:
-                data["address_response"]="No addresses found"
+                data["address_response"] = "No addresses found"
 
         if "dates" in selected_options:
             date_pattern = r'(?i)\b(?:\d{1,2}[-/]\d{1,2}[-/]\d{2,4}|' \

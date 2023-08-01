@@ -1,129 +1,122 @@
-from flask import Flask, request, render_template, json, jsonify
-from pdfminer.high_level import extract_text
-from nameparser import HumanName
-import datefinder
-from dateutil import parser
-import dateutil.parser as dp
+from flask import Flask, request, render_template, jsonify
+from pdfminer.high_level import extract_text, extract_pages, extract_text_to_fp
+import json
 import pyap
-import spacy
-nlp = spacy.load("en_core_web_sm")
-text = extract_text('Lease6.pdf')
+import PyPDF2
+import pandas as pd
+import numpy as np
+from dateutil import parser
+import datefinder
+import dateparser
+import nltk
+import tika
 import re
-
-
-#file_path = 'path/to/your/file.txt'
-
-#with open(file_path, 'r') as file:
-    #text = file.read()
-
-# Define a regex pattern to match date patterns
-date_pattern = r'\b(?:\d{1,2}[-/]\d{1,2}[-/]\d{2,4}|' \
-               r'\d{1,2}(?:st|nd|rd|th)? \w+ \d{2,4}|' \
-               r'\d{1,2} \w+ \d{2,4}|' \
-               r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d{1,2},? \d{2,4})\b'
-
-# Find all matches of the date pattern in the text
-matches = re.findall(date_pattern, text)
-
-# Parse the matched dates using dateutil
-dates = [dp.parse(match, fuzzy=True) for match in matches]
-
-# Print the extracted dates
-for date in dates:
-    pass
-    #print(date)
-
-print("------name prediction------------")
-
-
-# The extracted_names dictionary from the provided output
-extracted_names = {
-"Name_1": "TENANTherebyagreestopaythesum Dollars",
-    "Name_10": "MAINTENANCE TENANTagreesthatnorepresentationastoconditionorrepairofpremisesandnopromisetodecorate",
-    "Name_11": "Landlord",
-    "Name_12": "Eric Lewis Responsibilties",
-    "Name_13": "Landlord",
-    "Name_14": "Pull",
-    "Name_15": "Closet Rod Keys Returned Light Fixtures",
-    "Name_16": "Sills Baseboards Shower",
-    "Name_17": "Holder Blinds",
-    "Name_18": "Windows Must",
-    "Name_19": "Garages",
-    "Name_2": "Schuyler Avenue",
-    "Name_20": "Resident",
-    "Name_21": "Eric Lewis Emergencies",
-    "Name_22": "Resident",
-    "Name_23": "Fire Call",
-    "Name_24": "Eric Lewis Miscellaneous",
-    "Name_25": "Clogged Backed Toilet ThismaybeconsideredanemergencyONLYifthereisonlyonetoiletintheunitANDyouhavemadeeveryeffort",
-    "Name_26": "Locked",
-    "Name_27": "Eric Lewis",
-    "Name_28": "Dave Crandall",
-    "Name_29": "Eric Lewis Lessee",
-    "Name_3": "Eric Lewis",
-    "Name_4": "LANDLORD Eric",
-    "Name_5": "Ifthepremisesofthebuildingaresubstantiallydamagedby",
-    "Name_6": "Landlord",
-    "Name_7": "Tenant",
-    "Name_8": "Lease Term Tenant",
-    "Name_9": "LANDLORD"
-}
-
-"""def is_valid_human_name(name):
-    if not re.search(r'[a-zA-Z]', name) or name.isupper():
-        return False
-
-    parsed_name = HumanName(name)
-    return bool(parsed_name.first and parsed_name.last)
-
-valid_human_names = {}
-
-for key, name in extracted_names.items():
-    if is_valid_human_name(name):
-        valid_human_names[key] = name
-
-print(valid_human_names)"""
-
-print("-------signature detect------")
-import cv2
-import pytesseract
+from nltk.tag import pos_tag
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
 import pdfplumber
+import spacy
+from dateparser.search import search_dates
+from nameparser import HumanName
+import os
+import addressparser
+from collections import OrderedDict
+app = Flask(__name__)
+nltk.download('punkt')
+nltk.download('stopwords')
+nlp = spacy.load('en_core_web_sm')
+@app.route("/ml-service/health/v1/ping",methods=["GET"])
+def home():
+    if request.method == 'GET':
+        return "pong"
+@app.route("/ml-service/text-extraction", methods=["POST"])
+def text_from_pdf():
+    if request.method == 'POST':
+        #print(request.files)
+        file = request.files["files"]
+        selected_options = request.form["extractOptions"]
+        file_path = "temp.pdf"
+        file.save(file_path)
+        with open(file_path, 'rb') as f:
+            text = extract_text(f)
+        data = {}
+        if "addresses" in selected_options:
+            addresse1 = pyap.parse(text, country="US")
+            addresse2 = pyap.parse(text, country="GB")  # uk
+            addresse3 = pyap.parse(text, country="CA")  # canada
+            addresses = addresse1
+            filtered_addresses = [address.full_address for address in addresses if
+                                  "1 RESIDENT IS RESPONSIBLE FOR CHAR" not in address.full_address
+                                  and "invitees.11. THERE IS NO WARRANTY OF A SMOK" not in address.full_address]
+            if filtered_addresses:
+                unique_addresses = list(set(filtered_addresses))
+                formatted_addresses = [{"value": address} for address in unique_addresses]
+                data['addresses'] = formatted_addresses
+                data['address_count'] = len(formatted_addresses)
+            else:
+                data["address_response"] = "No addresses found"
 
-# Provide the path to the PDF file
-pdf_path = 'Lease6.pdf'
+        if "dates" in selected_options:
+            date_pattern = r'(?i)\b(?:\d{1,2}[-/]\d{1,2}[-/]\d{2,4}|' \
+                           r'\d{1,2}(?:st|nd|rd|th)? \w+ \d{2,4}|' \
+                           r'\d{1,2} \w+ \d{2,4}|' \
+                           r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d{1,2},? \d{2,4}|' \
+                           r'(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?) \d{1,2}, \d{4}|' \
+                           r'[a-zA-Z]{3} \d{1,2}, \d{4}|' \
+                           r'[a-zA-Z]{3} \d{1,2},\d{4})\b'
 
+            matches = re.findall(date_pattern, text, flags=re.IGNORECASE)
+            dates = [parser.parse(match, fuzzy=True) for match in matches]
+            unique_dates = list(set(date.strftime("%Y-%m-%d") for date in dates))
+            # Filter out dates with starting year "0"
+            valid_dates = [date for date in unique_dates if not date.startswith("0")]
+            formatted_dates = [{"value": date} for date in valid_dates]
+            data['dates'] = formatted_dates
+            data['date_count'] = len(formatted_dates)
 
-# Function to extract text from an image using pytesseract
-def extract_text_from_image(image_path):
-    img = cv2.imread(image_path)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    text = pytesseract.image_to_string(gray)
-    return text
+        if "names" in selected_options:
+            def extract_names_from_pdf(file_path):
+                names = set()
+                stop_words = set(stopwords.words('english'))
+                with pdfplumber.open(file_path) as pdf:
+                    for page in pdf.pages:
+                        page_text = page.extract_text()
+                        tokens = word_tokenize(page_text)
+                        filtered_tokens = [token for token in tokens if token.isalpha() and token.lower() not in stop_words]
+                        text = ' '.join(filtered_tokens)
+                        doc = nlp(text)
+                        unique_names = set(ent.text for ent in doc.ents if ent.label_ == 'PERSON')
+                        names.update(unique_names)
+                return names
+            extracted_names = extract_names_from_pdf(file_path)
+            name_length_threshold = 25
+            filtered_names = [name for name in extracted_names if (len(name) <= name_length_threshold and len(name) > 2)]
+            formatted_names = [{"value": name} for name in filtered_names]
+            data['names'] = formatted_names
+            data['name_count'] = len(formatted_names)
 
+        if "full_text" in selected_options:
+            data['full_text'] = text
 
-# Function to process each page of the PDF and extract signatures
-def extract_signatures_from_pdf(pdf_path):
-    signatures = []
-    with pdfplumber.open(pdf_path) as pdf:
-        for page_num in range(len(pdf.pages)):
-            page = pdf.pages[page_num]
-            images = page.images
-            for idx, img in enumerate(images):
-                image_path = f"page_{page_num}_image_{idx}.png"
-                with open(image_path, 'wb') as f:
-                    f.write(img['stream'].get_object().get_data())
+        if "monetary_amounts" in selected_options:
+            doc = nlp(text)
+            us_amounts = [ent.text for ent in doc.ents if ent.label_ == "MONEY"]
+            formatted_amounts = [{"value": amount} for amount in us_amounts]
+            data['monetary_amounts'] = formatted_amounts
+            data['monetary_amount_count'] = len(formatted_amounts)
 
-                # Extract text from the image
-                signature_text = extract_text_from_image(image_path)
-                signatures.append(signature_text)
+        """if "emails" in selected_options:
+            email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+            emails = re.findall(email_pattern, text)
+            formatted_emails = [{"value": email} for email in emails]
+            data['emails'] = formatted_emails
+            data['email_count'] = len(formatted_emails)"""
 
-                # Remove the temporary image file
-                os.remove(image_path)
-
-    return signatures
-
-
+        os.remove(file_path)
+        return jsonify(data)
+    #return render_template("che.html", **locals())
+    #host="10.244.0.7",port=8080
+    #http://localhost:8080/ml-service/text-extraction
+    #https://india.yoroflow.com/ml-service/text-extraction
 if __name__ == "__main__":
-    signatures = extract_signatures_from_pdf(pdf_path)
-    for idx, signature_text in enumerate(signatures, start=1):
-        print(f"Signature {idx}: {signature_text}")
+    app.run(debug=True,host="0.0.0.0",port=8080)

@@ -25,7 +25,7 @@ app = Flask(__name__)
 nltk.download('punkt')
 nltk.download('stopwords')
 nlp = spacy.load('en_core_web_sm')
-@app.route("/pre", methods=["POST"])
+@app.route("/ml-service/text-extraction", methods=["POST"])
 def text_from_pdf():
     if request.method == 'POST':
         #print(request.files)
@@ -83,7 +83,7 @@ def text_from_pdf():
                 return names
             extracted_names = extract_names_from_pdf(file_path)
             name_length_threshold = 25
-            filtered_names = [name for name in extracted_names if len(name) <= name_length_threshold]
+            filtered_names = [name for name in extracted_names if (len(name) <= name_length_threshold )]
             formatted_names = {f"name_{idx}": name for idx, name in enumerate(filtered_names, start=1)}
             data['names'] = {
                 'name_count': len(filtered_names),
@@ -95,4 +95,4 @@ def text_from_pdf():
         return jsonify(data)
     #return render_template("che.html", **locals())
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run()

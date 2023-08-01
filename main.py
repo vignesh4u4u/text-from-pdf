@@ -17,6 +17,7 @@ app=Flask(__name__,template_folder="template")
 @app.route("/")
 def home():
     return render_template("pdf_to_text.html")
+    pass
 @app.route("/pre" ,methods=["POST","GET"])
 def text_from_pdf():
     if request.method == 'POST':
